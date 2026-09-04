@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAKUYA式 未来予測 ― これから20年で起こるAI革命｜音声で聴ける電子書籍</title>
+<style>
+  :root {
+    --paper: #fdfcf8;
+    --ink: #2b2b33;
+    --ink-soft: #5a5a66;
+    --accent1: #0e7c86;   /* deep teal */
+    --accent2: #1d4e89;   /* navy */
+    --accent3: #14b8a6;   /* bright teal */
+    --hl: linear-gradient(transparent 18%, rgba(255, 227, 84, .85) 18%, rgba(255, 210, 60, .9) 88%, transparent 88%);
+    --serif: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", serif;
+    --sans: "BIZ UDPGothic", "Yu Gothic UI", "Meiryo", sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  html, body { overflow-x: clip; overscroll-behavior-x: none; }
+  body {
+    font-family: var(--sans);
+    background: radial-gradient(1200px 800px at 70% -10%, #2c3e6b 0%, #1b2340 45%, #12172b 100%);
+    color: var(--ink);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+
+  /* ===== 書籍本体 ===== */
+  #book {
+    position: relative;
+    width: min(1060px, 96vw);
+    height: min(680px, calc(100vh - 92px));
+    perspective: 2200px;
+  }
+  .page {
+    position: absolute; inset: 0;
+    background: var(--paper);
+    border-radius: 10px 18px 18px 10px;
+    box-shadow: 0 30px 60px rgba(0,0,0,.5), 0 4px 14px rgba(0,0,0,.35);
+    display: flex; flex-direction: column;
+    opacity: 0; visibility: hidden;
+    transform: translateX(60px) rotateY(-14deg);
+    transform-origin: left center;
+    transition: transform .65s cubic-bezier(.22,.75,.25,1), opacity .55s ease;
+    overflow: hidden;
+  }
+  .page.current { opacity: 1; visibility: visible; transform: none; z-index: 2; }
+  .page.leaving { opacity: 0; visibility: visible; transform: translateX(-70px) rotateY(12deg); z-index: 1; }
+  /* 本の背・ノド */
+  .page::before {
+    content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 26px;
+    background: linear-gradient(90deg, rgba(0,0,0,.14), rgba(0,0,0,.045) 55%, transparent);
+    pointer-events: none; z-index: 5;
+  }
+  /* 柱・フッター */
+  .running {
+    flex: 0 0 auto;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 30px 10px 44px;
+    font-size: 11px; letter-spacing: .16em; color: #9a93a8;
+  }
+  .running .brand b { color: var(--accent1); font-weight: 700; }
+  .pagefoot {
+    flex: 0 0 auto;
+    display: flex; justify-content: center; align-items: center; gap: 10px;
+    padding: 10px 0 14px;
+    font-size: 11px; color: #a8a2b4; letter-spacing: .2em;
+  }
+  .pagefoot::before, .pagefoot::after {
+    content: ""; width: 60px; height: 1px;
+    background: linear-gradient(90deg, transparent, #cfc8dc);
+  }
+  .pagefoot::after { background: linear-gradient(90deg, #cfc8dc, transparent); }
+
+  /* 章バンド */
+  .chapband {
+    flex: 0 0 auto;
+    margin: 2px 30px 0 44px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .chapband .no {
+    font-family: var(--serif); font-size: 30px; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2) 60%, var(--accent3));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    line-height: 1;
+  }
+  .chapband h2 { font-size: 21px; letter-spacing: .04em; }
+  .chapband .rule { flex: 1; height: 3px; border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent1), var(--accent2) 55%, transparent); opacity: .35; }
+
+  /* 本文レイアウト */
+  .body2col {
+    flex: 1 1 auto; min-height: 0;
+    display: flex; gap: 26px;
+    padding: 16px 34px 6px 44px;
+  }
+  .fig { flex: 0 0 46%; min-width: 0; display: flex; align-items: center; justify-content: center; }
+  .txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+  .txt p {
+    font-size: 15.5px; line-height: 2.05; letter-spacing: .02em;
+    color: var(--ink); margin-bottom: .9em; text-align: justify;
+  }
+  .txt.wide p { font-size: 16px; }
+  /* 蛍光ペンハイライト */
+  span[data-sid] { border-radius: 3px; transition: background-color .25s; padding: 1px 0; }
+  span[data-sid].active { background-image: var(--hl); }
+  span[data-sid].done { color: var(--ink); }
+
+
+  .figimg {
+    max-width: 100%; max-height: 100%; width: auto; height: auto;
+    border-radius: 14px;
+    box-shadow: 0 10px 26px rgba(43,32,89,.16);
+    border: 1px solid #eee9f5;
+  }
+  /* 図版カード */
+  .shotcard {
+    width: 100%; border-radius: 12px; overflow: hidden;
+    border: 1px solid #e4dfee;
+    box-shadow: 0 10px 26px rgba(43,32,89,.14);
+    background: #fff;
+  }
+  .shotcard .bar {
+    height: 26px; background: linear-gradient(180deg,#f4f1fa,#e9e4f4);
+    display: flex; align-items: center; gap: 5px; padding: 0 10px;
+  }
+  .shotcard .bar i { width: 8px; height: 8px; border-radius: 50%; background: #d3cbe4; }
+  .shotcard img { display: block; width: 100%; height: auto; }
+  .figcap { margin-top: 8px; font-size: 11px; color: #8f88a0; text-align: center; letter-spacing: .06em; }
+
+  /* SVG図解共通 */
+  .diagram { width: 100%; height: auto; }
+
+  /* ===== スクショページ用 縦積みレイアウト ===== */
+  .body2col.vstack { flex-direction: column; gap: 8px; padding-top: 8px; }
+  .vstack .fig { flex: 1 1 auto; min-height: 0; width: 100%; }
+  .vstack .fig > div { height: 100%; width: 100%; display: flex; flex-direction: column; align-items: center; min-height: 0; }
+  .vstack .shotcard { max-width: 100%; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .vstack .shotcard img { flex: 1 1 auto; min-height: 0; width: auto; max-width: 100%; max-height: 52vh; object-fit: contain; }
+  .vstack .figcap { flex: 0 0 auto; }
+  .vstack .txt { flex: 0 0 auto; width: 100%; }
+  .vstack .txt p { line-height: 1.85; margin-bottom: .5em; }
+
+  /* ===== クリックで拡大（ライトボックス） ===== */
+  .shotcard img, .figimg { cursor: zoom-in; }
+  #lightbox {
+    position: fixed; inset: 0; z-index: 60;
+    background: rgba(8, 10, 24, .93);
+    display: none; align-items: center; justify-content: center;
+    cursor: zoom-out;
+  }
+  #lightbox.show { display: flex; }
+  #lightbox img {
+    max-width: 96vw; max-height: 96vh;
+    border-radius: 10px; box-shadow: 0 20px 60px rgba(0,0,0,.6);
+    background: #fff;
+  }
+
+  /* ===== 表紙 ===== */
+  .cover { align-items: center; justify-content: center; text-align: center;
+    background:
+      radial-gradient(700px 460px at 82% 8%, rgba(139,92,246,.16), transparent 60%),
+      radial-gradient(600px 420px at 12% 92%, rgba(15,108,189,.14), transparent 60%),
+      var(--paper); }
+  .cover .coverInner { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 30px; }
+  .cover .lbl {
+    font-size: 12px; letter-spacing: .5em; color: var(--accent1); font-weight: 700;
+  }
+  .cover h1 {
+    font-family: var(--serif); font-size: clamp(34px, 5vw, 54px); line-height: 1.35;
+    letter-spacing: .06em; color: #211d33;
+  }
+  .cover h1 .grad {
+    background: linear-gradient(120deg, var(--accent1) 10%, var(--accent2) 55%, var(--accent3));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .cover .sub { font-size: 14px; color: var(--ink-soft); letter-spacing: .14em; }
+  .voicebadge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12.5px; font-weight: 700; color: #fff; letter-spacing: .1em;
+    padding: 8px 18px; border-radius: 999px;
+    background: linear-gradient(120deg, var(--accent1), var(--accent2) 70%, var(--accent3));
+    box-shadow: 0 6px 18px rgba(99,72,214,.35);
+  }
+  #startBtn {
+    margin-top: 10px; cursor: pointer; border: none;
+    display: inline-flex; align-items: center; gap: 12px;
+    font-family: var(--sans); font-size: 16px; font-weight: 700; letter-spacing: .12em;
+    color: #241f38; padding: 15px 36px; border-radius: 999px;
+    background: #fff; border: 2px solid #d9d2ea;
+    box-shadow: 0 10px 26px rgba(30,20,70,.18);
+    transition: transform .18s, box-shadow .18s;
+  }
+  #startBtn:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(30,20,70,.26); }
+  #startBtn .tri {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(120deg, var(--accent1), var(--accent2));
+    display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 13px;
+  }
+  .cover .author { font-size: 13px; color: var(--ink-soft); letter-spacing: .2em; margin-top: 4px; }
+
+  /* ===== コントロールバー ===== */
+  #ctrl {
+    margin-top: 16px;
+    display: flex; align-items: center; gap: 14px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.14);
+    backdrop-filter: blur(10px);
+    padding: 9px 18px; border-radius: 999px;
+    color: #e8e5f2; font-size: 12.5px; user-select: none;
+  }
+  #ctrl button {
+    cursor: pointer; border: none; background: rgba(255,255,255,.12); color: #fff;
+    width: 36px; height: 36px; border-radius: 50%; font-size: 14px;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  #ctrl button:hover { background: rgba(255,255,255,.24); }
+  #ctrl button.nav { width: auto; padding: 0 14px; border-radius: 999px; font-size: 13px; white-space: nowrap; letter-spacing: .04em; }
+  #ctrl button.primary {
+    width: 46px; height: 46px; font-size: 17px;
+    background: linear-gradient(120deg, var(--accent1), var(--accent2));
+  }
+  #pageInd { min-width: 64px; text-align: center; letter-spacing: .12em; }
+  .toggle { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; }
+  .toggle .sw {
+    width: 34px; height: 19px; border-radius: 999px; background: rgba(255,255,255,.2); position: relative; transition: background .2s;
+  }
+  .toggle .sw::after {
+    content: ""; position: absolute; top: 2.5px; left: 3px; width: 14px; height: 14px;
+    border-radius: 50%; background: #fff; transition: left .2s;
+  }
+  .toggle.on .sw { background: linear-gradient(120deg, var(--accent1), var(--accent2)); }
+  .toggle.on .sw::after { left: 17px; }
+  #speedSel {
+    cursor: pointer; border: 1px solid rgba(255,255,255,.22);
+    background: rgba(255,255,255,.12); color: #fff;
+    font-family: var(--sans); font-size: 12.5px; font-weight: 700;
+    padding: 6px 10px; border-radius: 999px; outline: none;
+  }
+  #speedSel option { color: #2b2b33; background: #fff; }
+
+  /* ===== レスポンシブ ===== */
+  @media (max-width: 860px) {
+    body { overflow-y: auto; overflow-x: hidden; }
+    #book { height: min(640px, calc(100vh - 128px)); }
+    /* 画像は固定・文字エリアだけがスクロールするフレームになる */
+    .body2col, .body2col.vstack { flex-direction: column; gap: 12px; padding: 10px 22px 4px 30px; overflow: hidden; }
+    .fig, .vstack .fig { flex: 0 0 auto; }
+    .figimg { max-height: 42vh; }
+    .vstack .shotcard img { max-height: 34vh; }
+    .txt, .vstack .txt { flex: 1 1 auto; min-height: 0; overflow-y: auto; justify-content: flex-start; }
+    .txt p { font-size: 13.5px; line-height: 1.9; }
+    .chapband { margin-left: 22px; margin-right: 16px; }
+    .chapband h2 { font-size: 17px; }
+    .chapband .no { font-size: 24px; }
+    /* 柱：折り返し禁止・省略表示 */
+    .running { padding: 10px 16px 6px 22px; gap: 8px; }
+    .running .brand {
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      min-width: 0; flex: 1 1 auto;
+    }
+    .running span:last-child { white-space: nowrap; flex: 0 0 auto; }
+    /* コントロールバー：画面内に収める */
+    #ctrl {
+      flex-wrap: wrap; justify-content: center;
+      gap: 8px 12px; padding: 8px 14px;
+      max-width: 96vw; border-radius: 22px;
+      font-size: 12px;
+    }
+    #ctrl button { width: 32px; height: 32px; font-size: 12px; }
+    #ctrl button.primary { width: 40px; height: 40px; font-size: 15px; }
+    #ctrl button.nav { width: auto; padding: 0 10px; font-size: 12px; }
+    #pageInd { min-width: 46px; }
+    .toggle { white-space: nowrap; }
+    #speedSel { padding: 5px 8px; font-size: 12px; }
+  }
+
+  /* ===== 横向きスマホなど「高さの低い画面」 ===== */
+  @media (max-height: 540px) {
+    body { overflow-y: auto; overflow-x: hidden; }
+    #book { height: calc(100vh - 104px); min-height: 300px; }
+    .body2col, .body2col.vstack { flex-direction: column; overflow: hidden; }
+    .fig, .vstack .fig { flex: 0 0 auto; }
+    .txt, .vstack .txt { flex: 1 1 auto; min-height: 0; overflow-y: auto; justify-content: flex-start; }
+    .running { padding: 8px 24px 4px 30px; font-size: 10px; }
+    .running .brand { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .chapband { margin-top: 0; }
+    .chapband .no { font-size: 20px; }
+    .chapband h2 { font-size: 16px; }
+    .body2col { padding: 8px 26px 4px 34px; gap: 16px; overflow-y: auto; }
+    .txt p { font-size: 12.5px; line-height: 1.75; margin-bottom: .5em; }
+    .figimg { max-height: 36vh; }
+    .vstack .shotcard img { max-height: 26vh; }
+    .figcap { font-size: 10px; margin-top: 4px; }
+    .pagefoot { padding: 4px 0 8px; }
+    .cover .coverInner { gap: 10px; padding: 16px; }
+    .cover h1 { font-size: clamp(22px, 4.5vw, 38px); }
+    #startBtn { padding: 10px 24px; font-size: 14px; }
+    #ctrl { margin-top: 8px; padding: 6px 12px; gap: 6px 10px; font-size: 11.5px; }
+    #ctrl button { width: 30px; height: 30px; font-size: 12px; }
+    #ctrl button.primary { width: 36px; height: 36px; font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="book"></div>
+
+<div id="ctrl" style="visibility:hidden">
+  <button id="prevBtn" class="nav" title="前のページ">‹ 前へ</button>
+  <button id="playBtn" class="primary" title="再生 / 一時停止">▶</button>
+  <button id="nextBtn" class="nav" title="次のページ">次へ ›</button>
+  <span id="pageInd">1 / 14</span>
+  <span class="toggle on" id="autoTgl" title="読み終わったら自動でページをめくる">
+    <span class="sw"></span>自動めくり
+  </span>
+  <select id="speedSel" title="読み上げ速度">
+    <option value="0.75">0.75x</option>
+    <option value="1" selected>1x</option>
+    <option value="1.2">1.2x</option>
+    <option value="1.5">1.5x</option>
+    <option value="1.8">1.8x</option>
+    <option value="2">2x</option>
+    <option value="2.5">2.5x</option>
+    <option value="3">3x</option>
+  </select>
+</div>
+
+<!-- ===== ページテンプレート（JSが #book に展開） ===== -->
+<template id="tpl-pages">
+
+  <!-- P1 表紙 -->
+  <section class="page cover" data-page="P1">
+    <div class="coverInner">
+      <div class="lbl">MENTA EXCEL PRESENTS</div>
+      <h1>TAKUYA式<br><span class="grad">未来予測</span></h1>
+      <div class="sub">これから20年で起こるAI革命と、僕らの立ち回り方</div>
+      <div class="voicebadge">🎧 本人の声で読み上げ＆自動ページめくり</div>
+      <button id="startBtn"><span class="tri">▶</span>タップして読み聞かせスタート</button>
+      <div class="author">著・朗読　TAKUYA（メンタエクセル）</div>
+      <p style="display:none"><span data-sid="p1s0">TAKUYA式、未来予測。</span><span data-sid="p1s1">これから20年で起こるAI革命と、僕らの立ち回り方。</span><span data-sid="p1s2">音声で聴ける電子書籍です。</span></p>
+    </div>
+  </section>
+
+  <!-- P2 この本は、未来を当てる本じゃありません -->
+  <section class="page" data-page="P2">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PROLOGUE</span></div>
+    <div class="chapband"><span class="no">00</span><h2>この本は、未来を当てる本じゃありません</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p2.jpg" alt="この本は、未来を当てる本じゃありません 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p2s0">はい、皆さんこんにちは。</span><span data-sid="p2s1">TAKUYAです。</span><span data-sid="p2s2">今回はですね、これから20年で起こるAI革命というテーマで、音声付きの電子書籍を作ってみました。</span></p>
+        <p><span data-sid="p2s3">この本、僕の声で読み上げが自動で進んで、今読んでいるところに、蛍光ペンみたいに色がついて、ページも勝手にめくれていきます。</span><span data-sid="p2s4">読み上げの速度は下のバーで変えられますし、図解はクリックすると大きく表示できます。</span><span data-sid="p2s5">なので皆さんは、聴きながら眺めているだけでOKです。</span></p>
+        <p><span data-sid="p2s6">それでは、いきましょう。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">2</div>
+  </section>
+
+  <!-- P3 皆さん、こういうことありませんか -->
+  <section class="page" data-page="P3">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PROLOGUE</span></div>
+    <div class="chapband"><span class="no">01</span><h2>皆さん、こういうことありませんか</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p3.jpg" alt="皆さん、こういうことありませんか 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p3s0">で、本題に入る前にですね、皆さん、こういうことありませんか。</span><span data-sid="p3s1">AIのニュースが毎日流れてきて、なんとなく焦る。</span><span data-sid="p3s2">でも、じゃあ明日から何をすればいいのかは、誰も教えてくれない。</span></p>
+        <p><span data-sid="p3s3">新しいツールの名前だけがどんどん増えていって、気づいたら何も変わっていない。</span><span data-sid="p3s4">実はこれ、すごく多いんですよ。</span><span data-sid="p3s5">僕のところにも、AIの勉強って何から始めればいいですか、っていう質問が本当にたくさん来ます。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">3</div>
+  </section>
+
+  <!-- P4 数年前の僕の話 -->
+  <section class="page" data-page="P4">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PROLOGUE</span></div>
+    <div class="chapband"><span class="no">02</span><h2>数年前の僕の話</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p4.jpg" alt="数年前の僕の話 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p4s0">で、先に僕の話を少しだけさせてください。</span><span data-sid="p4s1">今でこそAIとか自動化を教える仕事をして、YouTubeも17万人の方に登録していただいてるんですけれども、数年前の僕は本当にひどかったです。</span><span data-sid="p4s2">毎日20時まで残業して、上司にはこんなのもできないのかと言われて、悔しくてトイレで泣いたこともあります。</span></p>
+        <p><span data-sid="p4s3">ストレスで持病が悪化して、入院までしました。</span><span data-sid="p4s4">ITも苦手で、そもそもExcelすら苦手なレベルだったんですね。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">4</div>
+  </section>
+
+  <!-- P5 それでも、変われた理由 -->
+  <section class="page" data-page="P5">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PROLOGUE</span></div>
+    <div class="chapband"><span class="no">03</span><h2>それでも、変われた理由</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p5.jpg" alt="それでも、変われた理由 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p5s0">じゃあ、そんな僕がなんで変われたのか。</span><span data-sid="p5s1">才能じゃないんですよ。</span><span data-sid="p5s2">たった一つ、作業をこなす人から、仕事を仕組みにする人に、立ち位置を変えただけなんです。</span></p>
+        <p><span data-sid="p5s3">VBAという、Excelを自動で動かすスキルを一つ覚えて、毎日の作業をちょっとずつ自動化していきました。</span><span data-sid="p5s4">その結果、年間で大体600時間ぐらいの時間が返ってきて、そこから人生が動き出したんですね。</span><span data-sid="p5s5">この本で伝えたいことも、突き詰めるとそこだけです。</span></p>
+        <p><span data-sid="p5s6">ちなみに600時間って、1日に直すと2時間半ぐらいですね。</span><span data-sid="p5s7">それが毎日返ってきた感じです。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">5</div>
+  </section>
+
+  <!-- P6 この本の土台にする、ひとつの講演 -->
+  <section class="page" data-page="P6">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PROLOGUE</span></div>
+    <div class="chapband"><span class="no">04</span><h2>この本の土台にする、ひとつの講演</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p6.jpg" alt="この本の土台にする、ひとつの講演 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p6s0">で、この本には、はっきりした土台があります。</span><span data-sid="p6s1">2026年のソフトバンクワールドという場で、孫正義さんが2040年の世界について語った基調講演です。</span><span data-sid="p6s2">2040年って、今から大体15年後ですね。</span></p>
+        <p><span data-sid="p6s3">これがですね、僕が今まで聞いた未来の話の中で、ダントツで具体的だったんですよ。</span><span data-sid="p6s4">ただ、あの講演は大企業の経営者に向けた話なんですね。</span><span data-sid="p6s5">投資の話で、会社の話なんです。</span></p>
+        <p><span data-sid="p6s6">なので僕は、あれを、働く個人の話に置き換えてみたいと思ったんですね。</span><span data-sid="p6s7">それがこの本です。</span><span data-sid="p6s8">ちなみに基調講演というのは、その日のメインになる、トップの人の話のことですね。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">6</div>
+  </section>
+
+  <!-- P7 先に結論を言います -->
+  <section class="page" data-page="P7">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PROLOGUE</span></div>
+    <div class="chapband"><span class="no">05</span><h2>先に結論を言います</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p7.jpg" alt="先に結論を言います 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p7s0">で、先に結論を言っておきますね。</span><span data-sid="p7s1">15年後に効いてくるのは、AIにどれだけ詳しいかじゃないんですよ。</span><span data-sid="p7s2">立ち位置です。</span></p>
+        <p><span data-sid="p7s3">作業する側にいるのか、任せる側にいるのか。</span><span data-sid="p7s4">ここだけなんですね。</span><span data-sid="p7s5">これから前半で孫さんの予測をご紹介して、後半で、じゃあ僕ら個人はどう立ち回るのかという話を、5つに分けてお伝えします。</span></p>
+        <p><span data-sid="p7s6">ここだけは、覚えておいていただけたらなと思います。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">7</div>
+  </section>
+
+  <!-- P8 ビジョンとは、期限と数字である -->
+  <section class="page" data-page="P8">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 1</span></div>
+    <div class="chapband"><span class="no">06</span><h2>ビジョンとは、期限と数字である</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p8.jpg" alt="ビジョンとは、期限と数字である 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p8s0">じゃあ、孫さんの話に入っていきます。</span><span data-sid="p8s1">まず、あの講演で僕が一番なるほどと思ったのが、この考え方なんですよ。</span><span data-sid="p8s2">ビジョンというのは、期限と数字で語るものだと。</span></p>
+        <p><span data-sid="p8s3">AIは大事だ、これからすごい時代が来る、みたいなふわっとした言葉で語っているうちは、はっきりしたビジョンにはならないと。</span><span data-sid="p8s4">いつ、どのくらい、という輪郭がないと、そこから戦略が立てられないんですね。</span><span data-sid="p8s5">で、孫さんはこのあと、実際に全部を数字で語っていきます。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">8</div>
+  </section>
+
+  <!-- P9 予測その1、世界のGDPの2割になる -->
+  <section class="page" data-page="P9">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 1</span></div>
+    <div class="chapband"><span class="no">07</span><h2>予測その1、世界のGDPの2割になる</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p9.jpg" alt="予測その1、世界のGDPの2割になる 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p9s0">一つ目の予測です。</span><span data-sid="p9s1">孫さんはこう言っています。</span><span data-sid="p9s2">2040年には超知能、つまり人間をはるかに超えるAIですね。</span></p>
+        <p><span data-sid="p9s3">これに関わる産業だけで、世界のGDPの約20パーセントを占めるようになる、と。</span><span data-sid="p9s4">売上でいうと年間7000兆円という規模ですね。</span><span data-sid="p9s5">ここで面白いのが、逆に言うと残りの80パーセントは、今までの産業とそんなに変わらないという見立てなんですよ。</span></p>
+        <p><span data-sid="p9s6">15年後もハンバーガーは食べているし、週末には公園にも行くと。</span><span data-sid="p9s7">この80パーセントの話は、あとでもう一度出てきます。</span><span data-sid="p9s8">あとGDPというのは、世界中で1年間に生まれたお金の合計のことですね。</span></p>
+        <p><span data-sid="p9s9">その2割がAIの側にいく、という話なんですよ。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">9</div>
+  </section>
+
+  <!-- P10 予測その2、AIエージェントが100兆個 -->
+  <section class="page" data-page="P10">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 1</span></div>
+    <div class="chapband"><span class="no">08</span><h2>予測その2、AIエージェントが100兆個</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p10.jpg" alt="予測その2、AIエージェントが100兆個 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p10s0">二つ目です。</span><span data-sid="p10s1">AIエージェント、つまり自分で判断して動くAIが、100兆個という規模で地球上に広がる、と孫さんは話されていました。</span><span data-sid="p10s2">しかもそれが、人間を通さないで、エージェント同士で会話をし始めると。</span></p>
+        <p><span data-sid="p10s3">今は人間と人間がやり取りしている世界ですけれども、それがエージェントとエージェントのやり取りに置き換わっていくという話なんですね。</span><span data-sid="p10s4">人間中心の社会から、エージェント中心の社会へ、という表現をされていました。</span><span data-sid="p10s5">エージェントというのは、一度頼んだら段取りまで自分でやってくれるAIのことなんですね。</span></p>
+        <p><span data-sid="p10s6">例えば、僕の予定を見て会議室まで押さえてくれる係、みたいなイメージです。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">10</div>
+  </section>
+
+  <!-- P11 予測その3、ヒューマノイドが10億体 -->
+  <section class="page" data-page="P11">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 1</span></div>
+    <div class="chapband"><span class="no">09</span><h2>予測その3、ヒューマノイドが10億体</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p11.jpg" alt="予測その3、ヒューマノイドが10億体 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p11s0">三つ目です。</span><span data-sid="p11s1">人型のロボット、ヒューマノイドが10億体規模で生まれると。</span><span data-sid="p11s2">ここが今までのロボットと決定的に違うのは、人間がプログラムして動かす道具ではなくて、自分で判断して、自分で動くという点なんですね。</span></p>
+        <p><span data-sid="p11s3">24時間動けるので、人間の労働に換算すると、もっと大きな規模になるという話ですね。</span><span data-sid="p11s4">肉体労働の主役が、人類からロボットに移るという予測です。</span><span data-sid="p11s5">正直、聞いたときはちょっと現実感がなかったんですけれども、根拠は次のページの数字です。</span></p>
+        <p><span data-sid="p11s6">ロボットは休まないので、人の頭数でいうと何倍にもなる、という意味なんですね。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">11</div>
+  </section>
+
+  <!-- P12 予測その4、桁違いのインフラ投資 -->
+  <section class="page" data-page="P12">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 1</span></div>
+    <div class="chapband"><span class="no">10</span><h2>予測その4、桁違いのインフラ投資</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p12.jpg" alt="予測その4、桁違いのインフラ投資 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p12s0">四つ目です。</span><span data-sid="p12s1">それだけのAIを動かすには、とんでもない量のコンピューターと電力が要ります。</span><span data-sid="p12s2">孫さんは、2040年のデータセンターは3テラワット、ちょっと想像もつかない規模になって、そこに毎年5兆ドル、日本円で約800兆円の投資が必要になるという話でした。</span></p>
+        <p><span data-sid="p12s3">毎年800兆円ですよ。</span><span data-sid="p12s4">普通に聞くとバブルにしか聞こえないんですけれども、さっきの年間7000兆円の売上があるなら、十分に成り立つ計算なんだと。</span><span data-sid="p12s5">ここは聞いていて、素直にすごいなと思いましたね。</span></p>
+        <p><span data-sid="p12s6">データセンターというのは、AIを動かすコンピューターを何万台も置いた建物のことですね。</span><span data-sid="p12s7">毎年800兆円かけても7000兆円返ってくるなら、ちゃんと元は取れる、という計算なんですよ。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">12</div>
+  </section>
+
+  <!-- P13 予測その5、人間も進化する側に回れ -->
+  <section class="page" data-page="P13">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 1</span></div>
+    <div class="chapband"><span class="no">11</span><h2>予測その5、人間も進化する側に回れ</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p13.jpg" alt="予測その5、人間も進化する側に回れ 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p13s0">五つ目、最後です。</span><span data-sid="p13s1">孫さんは、人間もスーパーヒューマンになるしかない、という言い方をされていました。</span><span data-sid="p13s2">人類はこれまでも、車で足を、飛行機で行動範囲を、テレビやラジオで目と耳を広げてきたと。</span></p>
+        <p><span data-sid="p13s3">今度はいよいよ、頭脳が拡張される番だという話ですね。</span><span data-sid="p13s4">で、この進化を拒否する人は、自分の世界を自分で閉じてしまうことになると。</span><span data-sid="p13s5">かなり強い言葉でしたけれども、僕はここ、すごく大事なところだと思っています。</span></p>
+        <p><span data-sid="p13s6">頭脳が拡張されるといっても、考える作業をAIに手伝ってもらう、それだけのことなんですね。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">13</div>
+  </section>
+
+  <!-- P14 ここまでが、孫さんの話です -->
+  <section class="page" data-page="P14">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 1</span></div>
+    <div class="chapband"><span class="no">12</span><h2>ここまでが、孫さんの話です</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p14.jpg" alt="ここまでが、孫さんの話です 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p14s0">はい、ここまでが孫さんの講演のご紹介です。</span><span data-sid="p14s1">2040年、GDPの20パーセント、エージェント100兆個、ヒューマノイド10億体、年間800兆円の投資。</span><span data-sid="p14s2">全部、期限と数字で語られていました。</span></p>
+        <p><span data-sid="p14s3">で、ここから先は全部、僕の意見です。</span><span data-sid="p14s4">孫さんの話ではありません。</span><span data-sid="p14s5">ここからが本題なので、ぜひ最後まで聴いていただけたらなと思います。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">14</div>
+  </section>
+
+  <!-- P15 当たるかどうかは、正直どうでもいい -->
+  <section class="page" data-page="P15">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 2</span></div>
+    <div class="chapband"><span class="no">13</span><h2>当たるかどうかは、正直どうでもいい</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p15.jpg" alt="当たるかどうかは、正直どうでもいい 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p15s0">で、いきなり身も蓋もないことを言うんですけれども。</span><span data-sid="p15s1">この予測が当たるかどうかは、僕ら個人にとっては、正直どうでもいいんですよ。</span><span data-sid="p15s2">エージェントが100兆個じゃなくて50兆個でも、僕らの明日の仕事は何も変わらないですよね。</span></p>
+        <p><span data-sid="p15s3">じゃあ何が大事なのか。</span><span data-sid="p15s4">予測の中身じゃなくて、期限と数字で考えるというあの型を、僕ら個人が真似することなんです。</span><span data-sid="p15s5">これがこの本で、僕が一番言いたいことです。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">15</div>
+  </section>
+
+  <!-- P16 なぜ、型のほうが大事なのか -->
+  <section class="page" data-page="P16">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 2</span></div>
+    <div class="chapband"><span class="no">14</span><h2>なぜ、型のほうが大事なのか</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p16.jpg" alt="なぜ、型のほうが大事なのか 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p16s0">どういうことかというと、僕らの周りって、なんとなくAIってすごいよね、で止まっている人が本当に多いんですよ。</span><span data-sid="p16s1">それだと何も動けないんですね。</span><span data-sid="p16s2">でも、3年後に自分の作業時間を週に5時間減らす、みたいに期限と数字で書いた瞬間に、じゃあ何から手をつけるかが自動的に決まるんです。</span></p>
+        <p><span data-sid="p16s3">未来予測って、当てるためのものじゃなくて、今日の行動を決めるための道具なんですよ。</span><span data-sid="p16s4">そういう使い方をしていただけたらなと思います。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">16</div>
+  </section>
+
+  <!-- P17 残りの8割に、僕らの仕事はあります -->
+  <section class="page" data-page="P17">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 2</span></div>
+    <div class="chapband"><span class="no">15</span><h2>残りの8割に、僕らの仕事はあります</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p17.jpg" alt="残りの8割に、僕らの仕事はあります 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p17s0">はい、ここでさっきの80パーセントの話に戻ります。</span><span data-sid="p17s1">AIが世界の20パーセントを取るということは、裏を返せば、残りの80パーセントは今までの延長なんですね。</span><span data-sid="p17s2">僕らの仕事の大半は、実はこっち側なんですよ。</span></p>
+        <p><span data-sid="p17s3">だからまず、必要以上に怖がらなくていいんですよ。</span><span data-sid="p17s4">明日いきなり全部の仕事がなくなる、みたいなことにはならないんですね。</span><span data-sid="p17s5">ここ、安心してもらって大丈夫です。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">17</div>
+  </section>
+
+  <!-- P18 ただし、8割側でも差はつきます -->
+  <section class="page" data-page="P18">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 2</span></div>
+    <div class="chapband"><span class="no">16</span><h2>ただし、8割側でも差はつきます</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p18.jpg" alt="ただし、8割側でも差はつきます 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p18s0">ただですね、ここからが大事なところなんですけれども。</span><span data-sid="p18s1">同じ80パーセント側にいても、AIを使う人と使わない人で、差はしっかりつきます。</span><span data-sid="p18s2">というより、そこでしか差がつかなくなります。</span></p>
+        <p><span data-sid="p18s3">さっきの20パーセント側、つまりAIそのものの巨大な産業を作るのは、正直、僕らの仕事じゃないんですよ。</span><span data-sid="p18s4">あれは孫さんたちの仕事です。</span><span data-sid="p18s5">僕らの勝負は、いつもの仕事をAIと一緒にどう回すか、こっちなんですね。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">18</div>
+  </section>
+
+  <!-- P19 奪うのはAIじゃなくて、AIを使う人 -->
+  <section class="page" data-page="P19">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 2</span></div>
+    <div class="chapband"><span class="no">17</span><h2>奪うのはAIじゃなくて、AIを使う人</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p19.jpg" alt="奪うのはAIじゃなくて、AIを使う人 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p19s0">で、よく言われる、AIに仕事を奪われる、という話。</span><span data-sid="p19s1">あれ、僕は半分ウソだと思っています。</span><span data-sid="p19s2">正確に言うと、AIが奪うんじゃないんですよ。</span></p>
+        <p><span data-sid="p19s3">AIを使う人が、使わない人から奪うんです。</span><span data-sid="p19s4">会社で考えると分かりやすいですね。</span><span data-sid="p19s5">同じ作業を、片方は3時間かけてやって、片方はAIと30分で終わらせる。</span></p>
+        <p><span data-sid="p19s6">数か月後に、仕事がどっちに集まるかという話です。</span><span data-sid="p19s7">相手は機械じゃなくて、隣の席の人なんですよ。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">19</div>
+  </section>
+
+  <!-- P20 作業者と設計者、たった一つの分かれ道 -->
+  <section class="page" data-page="P20">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 2</span></div>
+    <div class="chapband"><span class="no">18</span><h2>作業者と設計者、たった一つの分かれ道</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p20.jpg" alt="作業者と設計者、たった一つの分かれ道 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p20s0">じゃあ、その二人は何が違うのか。</span><span data-sid="p20s1">才能でもITスキルでもないです。</span><span data-sid="p20s2">自分の仕事を、言葉にする手間を惜しむかどうか。</span></p>
+        <p><span data-sid="p20s3">これだけなんですね。</span><span data-sid="p20s4">プロンプトが上手い人って、実は文章がうまいんじゃなくて、自分の仕事を言語化する力が高いんですよ。</span><span data-sid="p20s5">何を、どういう順番で、どうなったら完成なのか。</span></p>
+        <p><span data-sid="p20s6">これが説明できない仕事は、AIにも人にも任せられないんですね。</span><span data-sid="p20s7">つまり、自分の仕事をどれだけ言葉にできるかが、そのまま任せられる量になるんですね。</span><span data-sid="p20s8">ちなみにプロンプトというのは、AIへのお願いの文章、つまり指示書のことなんですよ。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">20</div>
+  </section>
+
+  <!-- P21 少数精鋭が、当たり前になります -->
+  <section class="page" data-page="P21">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 2</span></div>
+    <div class="chapband"><span class="no">19</span><h2>少数精鋭が、当たり前になります</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p21.jpg" alt="少数精鋭が、当たり前になります 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p21s0">じゃあ、これからの時代がどうなるかというと、僕は少数精鋭が当たり前になると思っています。</span><span data-sid="p21s1">昔は、大きい仕事をするには大人数が必要だったんですよ。</span><span data-sid="p21s2">資料を作る人がいて、データをまとめる人がいて、文章を書く人がいて。</span></p>
+        <p><span data-sid="p21s3">人数がそのまま組織の力だったんですね。</span><span data-sid="p21s4">それがこれからは、10人分の仕事を、AIを連れた1人がやる。</span><span data-sid="p21s5">これが普通になっていくと思います。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">21</div>
+  </section>
+
+  <!-- P22 僕の会社は1人です -->
+  <section class="page" data-page="P22">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 2</span></div>
+    <div class="chapband"><span class="no">20</span><h2>僕の会社は1人です</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p22.jpg" alt="僕の会社は1人です 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p22s0">実際、僕の会社って1人なんですよ。</span><span data-sid="p22s1">1人なのに、YouTubeの企画から台本、スライド、動画編集、経理の分析まで回っています。</span><span data-sid="p22s2">なんでかというと、僕の後ろでAIのチームが働いてくれているからなんですね。</span></p>
+        <p><span data-sid="p22s3">リサーチ担当、資料作成担当、チェック担当、みたいに役割を分けて、それぞれに僕のやり方を覚え込ませていく。</span><span data-sid="p22s4">自分の分身みたいな部下を、どんどん増やしていくイメージです。</span><span data-sid="p22s5">役割を分けるといっても、担当ごとに仕事の手順を書いた紙を渡しておく、みたいなことなんですよ。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">22</div>
+  </section>
+
+  <!-- P23 それでも人間に残る仕事は、判断です -->
+  <section class="page" data-page="P23">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 2</span></div>
+    <div class="chapband"><span class="no">21</span><h2>それでも人間に残る仕事は、判断です</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p23.jpg" alt="それでも人間に残る仕事は、判断です 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p23s0">ただし、丸投げとは全然違います。</span><span data-sid="p23s1">舵を取るのは、あくまで人間側なんですよ。</span><span data-sid="p23s2">判断は人間、作業はAI。</span></p>
+        <p><span data-sid="p23s3">この線引きが、これから人間に残る、本丸の仕事になります。</span><span data-sid="p23s4">というのも、AIって賢いんですけど気まぐれなんですね。</span><span data-sid="p23s5">8割ぐらいの叩き台は一瞬で作ってくれるんですけど、その中身が合っているかどうかは、結局こっちが見ないと分からないんです。</span></p>
+        <p><span data-sid="p23s6">だから、詳しくなるのは入り口で、任せられるのがゴールなんですね。</span><span data-sid="p23s7">気まぐれというのは、同じことを聞いても、毎回ちょっと違う答えが返ってくるということですね。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">23</div>
+  </section>
+
+  <!-- P24 15年後、椅子は2つしかない -->
+  <section class="page" data-page="P24">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 2</span></div>
+    <div class="chapband"><span class="no">22</span><h2>15年後、椅子は2つしかない</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p24.jpg" alt="15年後、椅子は2つしかない 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p24s0">で、第2部のまとめです。</span><span data-sid="p24s1">15年後、僕らが座れる椅子は、大きく2つしかないと思っています。</span><span data-sid="p24s2">ひとつは、作業する側の椅子。</span></p>
+        <p><span data-sid="p24s3">もうひとつは、任せる側の椅子です。</span><span data-sid="p24s4">作業する側の椅子は、これから確実に数が減って、座り心地も悪くなっていきます。</span><span data-sid="p24s5">逆に、任せる側の椅子は、会社の規模も肩書きも関係なく、誰でも座れるようになります。</span></p>
+        <p><span data-sid="p24s6">じゃあ、どうやってそっちに移るのか。</span><span data-sid="p24s7">ここから具体的な話をしていきます。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">24</div>
+  </section>
+
+  <!-- P25 立ち回りは、5つあります -->
+  <section class="page" data-page="P25">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 3</span></div>
+    <div class="chapband"><span class="no">23</span><h2>立ち回りは、5つあります</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p25.jpg" alt="立ち回りは、5つあります 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p25s0">ここから、僕が10年かけてたどり着いた、AI時代の立ち回りを5つお伝えします。</span><span data-sid="p25s1">一つ目、15年後を期限と数字で書く。</span><span data-sid="p25s2">二つ目、手札を増やす。</span></p>
+        <p><span data-sid="p25s3">三つ目、捨ててから任せる。</span><span data-sid="p25s4">四つ目、浮いた時間の半分を次に回す、複利時短術。</span><span data-sid="p25s5">五つ目、任せる側に回る。</span></p>
+        <p><span data-sid="p25s6">この5つです。</span><span data-sid="p25s7">順番にも意味があるので、上から順にいきましょう。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">25</div>
+  </section>
+
+  <!-- P26 立ち回り1、15年後を期限と数字で書く -->
+  <section class="page" data-page="P26">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 3</span></div>
+    <div class="chapband"><span class="no">24</span><h2>立ち回り1、15年後を期限と数字で書く</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p26.jpg" alt="立ち回り1、15年後を期限と数字で書く 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p26s0">まず一つ目。</span><span data-sid="p26s1">孫さんの話から一つだけ真似してほしいのが、この型なんですよ。</span><span data-sid="p26s2">15年後の自分を、期限と数字で書いてください。</span></p>
+        <p><span data-sid="p26s3">ただし、会社サイズじゃなくて、個人サイズにします。</span><span data-sid="p26s4">売上とか市場規模じゃなくていいんですよ。</span><span data-sid="p26s5">何年後に、自分の何が、どうなっているか。</span></p>
+        <p><span data-sid="p26s6">これを一つでいいので、実際に書いてみてほしいんですね。</span><span data-sid="p26s7">頭の中で思っているのと、書くのとでは、解像度が全然違います。</span><span data-sid="p26s8">解像度というのは、どれだけはっきり見えているか、ということですね。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">26</div>
+  </section>
+
+  <!-- P27 書くのは年収でも役職でもありません -->
+  <section class="page" data-page="P27">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 3</span></div>
+    <div class="chapband"><span class="no">25</span><h2>書くのは年収でも役職でもありません</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p27.jpg" alt="書くのは年収でも役職でもありません 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p27s0">僕がおすすめしたいのは、年収でも役職でもなくて、時間で書くことです。</span><span data-sid="p27s1">3年後、毎週5時間が自分に戻ってきている。</span><span data-sid="p27s2">こういう書き方ですね。</span></p>
+        <p><span data-sid="p27s3">なんでかというと、年収や役職って、会社の都合でどうにでも変わってしまうんですよ。</span><span data-sid="p27s4">でも、自分の作業時間を減らしたという事実は、誰にも取り上げられないんですね。</span><span data-sid="p27s5">しかも、その時間があれば次の手が打てます。</span></p>
+        <p><span data-sid="p27s6">時間だけは、自分の手元に確実に残るんですよ。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">27</div>
+  </section>
+
+  <!-- P28 立ち回り2、手札を増やす -->
+  <section class="page" data-page="P28">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 3</span></div>
+    <div class="chapband"><span class="no">26</span><h2>立ち回り2、手札を増やす</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p28.jpg" alt="立ち回り2、手札を増やす 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p28s0">二つ目は、手札を増やす、ですね。</span><span data-sid="p28s1">これ何かというと、使える道具の枚数のことですね。</span><span data-sid="p28s2">よくあるのが、AIといえばこれ、という1枚しか持っていないパターンなんですよ。</span></p>
+        <p><span data-sid="p28s3">で、その1枚が会社で使えない瞬間に、終わっちゃうんですね。</span><span data-sid="p28s4">会社によって環境って全部違うじゃないですか。</span><span data-sid="p28s5">外部のAIが禁止の会社もあれば、ソフトを入れられないパソコンもある。</span></p>
+        <p><span data-sid="p28s6">だから、枚数がそのまま生き残る力になるんです。</span><span data-sid="p28s7">まず1枚目は、皆さんの会社で使えるAIで大丈夫ですよ。</span><span data-sid="p28s8">そこから増やしていけばいいんです。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">28</div>
+  </section>
+
+  <!-- P29 ツールは変わる、型は変わらない -->
+  <section class="page" data-page="P29">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 3</span></div>
+    <div class="chapband"><span class="no">27</span><h2>ツールは変わる、型は変わらない</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p29.jpg" alt="ツールは変わる、型は変わらない 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p29s0">もう一つ大事なのが、覚えるのは道具じゃなくて型だ、ということなんですよ。</span><span data-sid="p29s1">皆さんがこの本を聴いている頃には、もっと新しいAIが出ているかもしれません。</span><span data-sid="p29s2">でも心配しなくて大丈夫です。</span></p>
+        <p><span data-sid="p29s3">名前が変わっても、役割を分けて、知識を入れて、任せる、という根本は変わらないので。</span><span data-sid="p29s4">手札を増やして、環境に適応する。</span><span data-sid="p29s5">この力が、AI時代にかなりつぶしが効くスキルかなと思います。</span></p>
+        <p><span data-sid="p29s6">知識を入れるというのは、社内のルールとか過去の資料を、先に読ませておくことなんですね。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">29</div>
+  </section>
+
+  <!-- P30 コストの階段を、下から登る -->
+  <section class="page" data-page="P30">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 3</span></div>
+    <div class="chapband"><span class="no">28</span><h2>コストの階段を、下から登る</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p30.jpg" alt="コストの階段を、下から登る 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p30s0">で、手札が増えてくると、次はどれを使うかという話になります。</span><span data-sid="p30s1">ここで僕が使っている判断がひとつあって、安いものから順番に試していく、コストの階段って呼んでいます。</span><span data-sid="p30s2">見分け方は、質問ひとつでOKです。</span></p>
+        <p><span data-sid="p30s3">その作業、ルールで100パーセント書き切れますか、と。</span><span data-sid="p30s4">書き切れるなら、AIじゃなくて決まった仕組みに任せます。</span><span data-sid="p30s5">そのほうが安いですし、毎回きっちり同じ結果になるので。</span></p>
+        <p><span data-sid="p30s6">書き切れない、判断とか文章が要る部分にだけ、AIを使うんですね。</span><span data-sid="p30s7">決まった仕組みというのは、Excelの関数やマクロみたいに、毎回きっちり同じ動きをするやつのことですね。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">30</div>
+  </section>
+
+  <!-- P31 それ、AIの仕事じゃないかもしれません -->
+  <section class="page" data-page="P31">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 3</span></div>
+    <div class="chapband"><span class="no">29</span><h2>それ、AIの仕事じゃないかもしれません</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p31.jpg" alt="それ、AIの仕事じゃないかもしれません 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p31s0">どういうことかというと、さっきも言ったとおり、AIは毎回同じ結果になるとは限らないんですよ。</span><span data-sid="p31s1">逆に、決まった仕組みは融通が利かないけど、確実です。</span><span data-sid="p31s2">毎月同じ形式のデータを集計するだけの作業に、わざわざAIを使うのって、枝を1本切るのにチェーンソーを持ち出すようなものなんですね。</span></p>
+        <p><span data-sid="p31s3">AIの守備範囲は、できるだけ小さくする。</span><span data-sid="p31s4">これがコストを一番下げるコツです。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">31</div>
+  </section>
+
+  <!-- P32 立ち回り3、捨ててから、任せる -->
+  <section class="page" data-page="P32">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 3</span></div>
+    <div class="chapband"><span class="no">30</span><h2>立ち回り3、捨ててから、任せる</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p32.jpg" alt="立ち回り3、捨ててから、任せる 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p32s0">三つ目です。</span><span data-sid="p32s1">皆さん、ムダな作業を見つけると、すぐ、これどう自動化しようかな、って考えちゃいませんか。</span><span data-sid="p32s2">でも、その一歩手前がめちゃくちゃ大事なんですよ。</span></p>
+        <p><span data-sid="p32s3">順番はこうです。</span><span data-sid="p32s4">やめる、減らす、変える、速くする。</span><span data-sid="p32s5">この順番です。</span></p>
+        <p><span data-sid="p32s6">どんなに頑張って自動化しても、かかる時間はゼロにはならないんですね。</span><span data-sid="p32s7">でも、作業そのものをなくしちゃえば、完全にゼロです。</span><span data-sid="p32s8">ツールもAIも要りません。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">32</div>
+  </section>
+
+  <!-- P33 ムダを自動化しても、ムダが速く回るだけ -->
+  <section class="page" data-page="P33">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 3</span></div>
+    <div class="chapband"><span class="no">31</span><h2>ムダを自動化しても、ムダが速く回るだけ</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p33.jpg" alt="ムダを自動化しても、ムダが速く回るだけ 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p33s0">例えば、誰も読んでいない日報。</span><span data-sid="p33s1">これを自動化したら確かに楽にはなりますけど、そもそも誰も読んでいないなら、上司に相談してやめちゃうのが正解なんですよ。</span><span data-sid="p33s2">散らかった部屋にルンバを走らせても、きれいにはならないですよね。</span></p>
+        <p><span data-sid="p33s3">まず物を減らすのが先なんです。</span><span data-sid="p33s4">ムダを自動化しても、ムダが速く回るだけ。</span><span data-sid="p33s5">これ、覚えておいてください。</span></p>
+        <p><span data-sid="p33s6">AIを入れる前に、消せるものを消す。</span><span data-sid="p33s7">ここが結構効くんですよ。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">33</div>
+  </section>
+
+  <!-- P34 立ち回り4、複利時短術 -->
+  <section class="page" data-page="P34">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 3</span></div>
+    <div class="chapband"><span class="no">32</span><h2>立ち回り4、複利時短術</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p34.jpg" alt="立ち回り4、複利時短術 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p34s0">四つ目です。</span><span data-sid="p34s1">これは僕が勝手に、複利時短術と呼んでいるものなんですけれども。</span><span data-sid="p34s2">自動化で時間が浮くじゃないですか。</span></p>
+        <p><span data-sid="p34s3">そのとき、浮いた時間の半分を、次の自動化に投資してほしいんですね。</span><span data-sid="p34s4">全部を休みに使ったり、全部を別の仕事で埋めたりすると、そこで止まっちゃうんですよ。</span><span data-sid="p34s5">半分だけ次に回す。</span></p>
+        <p><span data-sid="p34s6">すると、時短が時短を生んで、利息にまた利息がつく複利みたいに、どんどん増えていくんですよ。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">34</div>
+  </section>
+
+  <!-- P35 今日の数分を、バカにしない -->
+  <section class="page" data-page="P35">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 3</span></div>
+    <div class="chapband"><span class="no">33</span><h2>今日の数分を、バカにしない</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p35.jpg" alt="今日の数分を、バカにしない 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p35s0">で、大事なのが、あれもこれも同時にやらないことです。</span><span data-sid="p35s1">まず1本を、最後までやり切る。</span><span data-sid="p35s2">それだけでいいです。</span></p>
+        <p><span data-sid="p35s3">僕の年間600時間も、最初はコピペを減らす、たった数分から始まったんですよ。</span><span data-sid="p35s4">最初に作ったのは、毎週月曜の会議の招集を自動で送るだけのものでした。</span><span data-sid="p35s5">正直、こんな10分の自動化に意味あるのかなと思っていました。</span></p>
+        <p><span data-sid="p35s6">でも数か月後には、その作業のことを考えてすらいない状態になっていたんですね。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">35</div>
+  </section>
+
+  <!-- P36 立ち回り5、任せる側に回る -->
+  <section class="page" data-page="P36">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 3</span></div>
+    <div class="chapband"><span class="no">34</span><h2>立ち回り5、任せる側に回る</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p36.jpg" alt="立ち回り5、任せる側に回る 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p36s0">五つ目、最後です。</span><span data-sid="p36s1">任せる側に回る、ということですね。</span><span data-sid="p36s2">多くの人がやってしまうのが、AIに1個頼んで、出てきたものを直して、また1個頼む、というやり方なんですよ。</span></p>
+        <p><span data-sid="p36s3">これ、実は自分が作業者のままなんですね。</span><span data-sid="p36s4">そうじゃなくて、朝にまとめて仕事を振って、あとから確認して方向を直す。</span><span data-sid="p36s5">上司の側に回るんです。</span></p>
+        <p><span data-sid="p36s6">ここ、めちゃくちゃ大事なので、必ず覚えておいてください。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">36</div>
+  </section>
+
+  <!-- P37 僕の朝の30分を公開します -->
+  <section class="page" data-page="P37">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 3</span></div>
+    <div class="chapband"><span class="no">35</span><h2>僕の朝の30分を公開します</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p37.jpg" alt="僕の朝の30分を公開します 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p37s0">参考までに、僕の朝はこんな感じです。</span><span data-sid="p37s1">朝いちでAIに、リサーチはこれ、資料の下書きはこれ、データの集計はこれ、とまとめて指示を出します。</span><span data-sid="p37s2">で、コーヒーを淹れて戻ってくる頃には、それぞれがそれなりの形になっているんですよ。</span></p>
+        <p><span data-sid="p37s3">僕はそれを確認して、判断して、仕上げるだけ。</span><span data-sid="p37s4">1人なのに、3つ4つの仕事が同時に進んでいく。</span><span data-sid="p37s5">これ、もう部下がいるのと変わらないんですね。</span></p>
+        <p><span data-sid="p37s6">同時といっても、チャットの画面を3つ開いて、1個ずつ頼んでおくだけなんですよ。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">37</div>
+  </section>
+
+  <!-- P38 半径5メートルから始めてください -->
+  <section class="page" data-page="P38">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 3</span></div>
+    <div class="chapband"><span class="no">36</span><h2>半径5メートルから始めてください</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p38.jpg" alt="半径5メートルから始めてください 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p38s0">で、ここで一つ注意なんですけれども、いきなり会社全体とか、部署全体を考えないでください。</span><span data-sid="p38s1">考えきれないので、だいたい途中で止まっちゃいます。</span><span data-sid="p38s2">まずは自分の半径5メートル、つまり自分の業務だけでいいです。</span></p>
+        <p><span data-sid="p38s3">業務を一番分かっているのは、IT部門でもAIでもなくて、毎日それをやっている皆さんなんですよ。</span><span data-sid="p38s4">だから、皆さんが作るのが結局早いんですね。</span><span data-sid="p38s5">小さく始めて、実力を積むほうが結果的に近道です。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">38</div>
+  </section>
+
+  <!-- P39 静かに始める、3つのルール -->
+  <section class="page" data-page="P39">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 3</span></div>
+    <div class="chapband"><span class="no">37</span><h2>静かに始める、3つのルール</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p39.jpg" alt="静かに始める、3つのルール 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p39s0">あとですね、会社に、自動化していいですか、と聞くと、だいたい始まる前に終わります。</span><span data-sid="p39s1">なので僕は、自分の裁量の範囲で静かに始めることをおすすめしています。</span><span data-sid="p39s2">ただし、就業規則と情報セキュリティの範囲内で、というのが大前提です。</span></p>
+        <p><span data-sid="p39s3">その上で、ルールが3つあります。</span><span data-sid="p39s4">一つ目、今までの手作業の手順は必ず残しておくこと。</span><span data-sid="p39s5">二つ目、会社のデータは外に出さないこと。</span></p>
+        <p><span data-sid="p39s6">三つ目、出てきたものは必ず自分が目を通してから提出すること。</span><span data-sid="p39s7">外に出さないというのは、お客様の名前とか社内の数字を、そのまま貼り付けないということですね。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">39</div>
+  </section>
+
+  <!-- P40 三段階の未来 -->
+  <section class="page" data-page="P40">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 3</span></div>
+    <div class="chapband"><span class="no">38</span><h2>三段階の未来</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p40.jpg" alt="三段階の未来 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p40s0">はい、それを続けていくと、だいたい三段階で景色が変わっていきます。</span><span data-sid="p40s1">第一段階は、影の期間。</span><span data-sid="p40s2">自分の業務だけを静かに自動化して、時間と実力を積む時期ですね。</span></p>
+        <p><span data-sid="p40s3">第二段階は、頼られる期間。</span><span data-sid="p40s4">成果は隠しきれなくなって、あの人に聞け、と言われるようになります。</span><span data-sid="p40s5">第三段階は、設計する期間。</span></p>
+        <p><span data-sid="p40s6">部署全体の流れを見て、効率化を設計する側になります。</span><span data-sid="p40s7">個人の型が、部署の型になっていくんですね。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">40</div>
+  </section>
+
+  <!-- P41 5つの立ち回り、まとめ -->
+  <section class="page" data-page="P41">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 3</span></div>
+    <div class="chapband"><span class="no">39</span><h2>5つの立ち回り、まとめ</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p41.jpg" alt="5つの立ち回り、まとめ 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p41s0">はい、ここで5つをもう一度まとめますね。</span><span data-sid="p41s1">一つ目、15年後を期限と数字で書く。</span><span data-sid="p41s2">二つ目、手札を増やす。</span></p>
+        <p><span data-sid="p41s3">三つ目、捨ててから任せる。</span><span data-sid="p41s4">四つ目、浮いた時間の半分を次に回す。</span><span data-sid="p41s5">五つ目、任せる側に回る。</span></p>
+        <p><span data-sid="p41s6">この5つです。</span><span data-sid="p41s7">どれも今日から、お金をかけずに始められるものばかりなんですよ。</span><span data-sid="p41s8">全部やらなくていいので、どれか一つだけ選んでみてください。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">41</div>
+  </section>
+
+  <!-- P42 先輩の成功体験が、効かない時代 -->
+  <section class="page" data-page="P42">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 4</span></div>
+    <div class="chapband"><span class="no">40</span><h2>先輩の成功体験が、効かない時代</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p42.jpg" alt="先輩の成功体験が、効かない時代 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p42s0">はい、ここから最後のパートです。</span><span data-sid="p42s1">この先の15年で、僕が特に気をつけたほうがいいと思っているのが、過去の経験値の賞味期限なんですよ。</span><span data-sid="p42s2">孫さんも講演の最後で、これからは人類が経験したことのない世界に行くので、過去の経験値はあまり役に立たない、という話をされていました。</span></p>
+        <p><span data-sid="p42s3">これ、僕らのレベルでも同じです。</span><span data-sid="p42s4">先輩がこうやってきたから、が通用しない場面が確実に増えます。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">42</div>
+  </section>
+
+  <!-- P43 30パーセントの理解で、触り始めてください -->
+  <section class="page" data-page="P43">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 4</span></div>
+    <div class="chapband"><span class="no">41</span><h2>30パーセントの理解で、触り始めてください</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p43.jpg" alt="30パーセントの理解で、触り始めてください 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p43s0">じゃあどうすればいいかというと、学び方そのものを変えるしかないです。</span><span data-sid="p43s1">完璧に理解してから始めよう、という人は、正直いつまでも始まらないです。</span><span data-sid="p43s2">30パーセントぐらい分かったら、もう触り始めちゃってください。</span></p>
+        <p><span data-sid="p43s3">分からないところは、触りながら埋まっていきます。</span><span data-sid="p43s4">おすすめは、毎日15分だけ触ると決めることですね。</span><span data-sid="p43s5">3週間続くと、だいたい手が勝手に動くようになります。</span></p>
+        <p><span data-sid="p43s6">触るのは、皆さんの会社で使えるAIひとつで十分ですよ。</span><span data-sid="p43s7">今日やった仕事を、そのまま聞いてみてください。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">43</div>
+  </section>
+
+  <!-- P44 変わるのは、仕事だけじゃありません -->
+  <section class="page" data-page="P44">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 4</span></div>
+    <div class="chapband"><span class="no">42</span><h2>変わるのは、仕事だけじゃありません</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p44.jpg" alt="変わるのは、仕事だけじゃありません 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p44s0">あとですね、これから変わるのは仕事だけじゃないです。</span><span data-sid="p44s1">健康とか、お金とか、学び直しとか、生活全体にAIが入ってきます。</span><span data-sid="p44s2">孫さんの講演でも、自分に合わせた医療が当たり前になっていくという話がありました。</span></p>
+        <p><span data-sid="p44s3">そのときに、AIってよく分からないから、で止まっている人と、普段から触っている人とでは、受け取れるものが全然変わってくると思うんですよ。</span><span data-sid="p44s4">だから、仕事はその練習台だと思ってください。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">44</div>
+  </section>
+
+  <!-- P45 時間の自由が、幸福度の前提です -->
+  <section class="page" data-page="P45">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 4</span></div>
+    <div class="chapband"><span class="no">43</span><h2>時間の自由が、幸福度の前提です</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p45.jpg" alt="時間の自由が、幸福度の前提です 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p45s0">最後に、僕がずっと大事にしている言葉を紹介させてください。</span><span data-sid="p45s1">時間を取り戻し、あなたの理想の実現を加速する。</span><span data-sid="p45s2">AIも自動化も、全部道具にすぎないんですよ。</span></p>
+        <p><span data-sid="p45s3">本当に手に入れたいのは、その先の時間です。</span><span data-sid="p45s4">家族と笑う時間とか、学び直す時間とか、挑戦する時間ですね。</span><span data-sid="p45s5">幸せかどうかって結局、自分の時間を自分で使えるかどうかだと僕は思っています。</span></p>
+        <p><span data-sid="p45s6">自分と向き合う時間がないと、あれ、何のために働いてるんだっけ、ってなっちゃうので。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">45</div>
+  </section>
+
+  <!-- P46 明日からの3ステップ -->
+  <section class="page" data-page="P46">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 4</span></div>
+    <div class="chapband"><span class="no">44</span><h2>明日からの3ステップ</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p46.jpg" alt="明日からの3ステップ 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p46s0">で、明日から何をするかですけれども、3つだけです。</span><span data-sid="p46s1">一つ目、自分の1週間の仕事を全部書き出して、嫌いな仕事に印をつける。</span><span data-sid="p46s2">嫌だなと思う作業ほど、実は改善のネタなので。</span></p>
+        <p><span data-sid="p46s3">二つ目、その中から1つ、やめられるものを探して、やめる。</span><span data-sid="p46s4">三つ目、残った1つをAIか仕組みに任せてみる。</span><span data-sid="p46s5">これだけです。</span></p>
+        <p><span data-sid="p46s6">いきなり大きな成果は要りません。</span><span data-sid="p46s7">今日の数分を、バカにしないでください。</span><span data-sid="p46s8">任せ方は簡単で、その作業の手順を書き出して、そのままAIに渡すだけでいいんですよ。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">46</div>
+  </section>
+
+  <!-- P47 今がどんな状態でも、遅すぎることはありません -->
+  <section class="page" data-page="P47">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>PART 4</span></div>
+    <div class="chapband"><span class="no">45</span><h2>今がどんな状態でも、遅すぎることはありません</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p47.jpg" alt="今がどんな状態でも、遅すぎることはありません 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p47s0">僕は、自信も健康も失ったところから、立ち位置を一つ変えて、人生を立て直しました。</span><span data-sid="p47s1">なので断言できます。</span><span data-sid="p47s2">今がどんな状態でも、遅すぎることはありません。</span></p>
+        <p><span data-sid="p47s3">しかも皆さんには、あの頃の僕にはなかった、AIという最強の味方がいるわけです。</span><span data-sid="p47s4">明日、目の前の作業をやる前に、一つだけ自分に問いかけてみてください。</span><span data-sid="p47s5">これ、自分がやる必要あるかな、と。</span></p>
+        <p><span data-sid="p47s6">その小さな問いが、最初の一歩です。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">47</div>
+  </section>
+
+  <!-- P48 おわりに -->
+  <section class="page" data-page="P48">
+    <div class="running"><span class="brand"><b>メンタエクセル式</b>　TAKUYA式 未来予測</span><span>EPILOGUE</span></div>
+    <div class="chapband"><span class="no">46</span><h2>おわりに</h2><div class="rule"></div></div>
+    <div class="body2col">
+      <div class="fig">
+        <img class="figimg" src="assets/figs/fig_p48.jpg" alt="おわりに 図解">
+      </div>
+      <div class="txt">
+        <p><span data-sid="p48s0">はいということで、今回の電子書籍は以上になります。</span><span data-sid="p48s1">ここまで聴いていただいて、本当にありがとうございました。</span><span data-sid="p48s2">この本の内容をもっと詳しく知りたい方は、YouTubeのほうでもAIと自動化の使い方を発信していますので、よかったら覗いてみてください。</span></p>
+        <p><span data-sid="p48s3">それから、公式LINEでは、こういった教材や資料を無料でお配りしています。</span><span data-sid="p48s4">それでは、一緒にスキルアップしていきましょう。</span><span data-sid="p48s5">お疲れ様でした。</span></p>
+      </div>
+    </div>
+    <div class="pagefoot">48</div>
+  </section>
+
+</template>
+
+<div id="lightbox"><img alt="拡大表示"></div>
+
+<script src="assets/audio/manifest.js"></script>
+<script>
+(() => {
+  const MANIFEST = window.MANIFEST || [];
+  const book = document.getElementById('book');
+  const tpl = document.getElementById('tpl-pages');
+  book.appendChild(tpl.content.cloneNode(true));
+
+  const pages = [...book.querySelectorAll('.page')];
+  const ctrl = document.getElementById('ctrl');
+  const playBtn = document.getElementById('playBtn');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const autoTgl = document.getElementById('autoTgl');
+  const pageInd = document.getElementById('pageInd');
+  const speedSel = document.getElementById('speedSel');
+
+  // ページごとの文リスト
+  const byPage = {};
+  MANIFEST.forEach(m => { (byPage[m.page] = byPage[m.page] || []).push(m); });
+
+  let cur = 0;            // 現在ページindex
+  let playing = false;    // 再生中フラグ
+  let autoTurn = true;
+  let speed = 1;
+  let audio = new Audio();
+  let seq = 0;            // 再生セッション識別（中断制御）
+
+  function showPage(i, instant) {
+    pages.forEach((p, k) => {
+      p.classList.remove('leaving');
+      if (k === i) { p.classList.add('current'); }
+      else {
+        if (p.classList.contains('current') && !instant && k < i) {
+          p.classList.remove('current'); p.classList.add('leaving');
+          setTimeout(() => p.classList.remove('leaving'), 700);
+        } else { p.classList.remove('current'); }
+      }
+    });
+    cur = i;
+    pageInd.textContent = (i + 1) + ' / ' + pages.length;
+    // ページ切替のたびに横方向のズレを強制リセット（iOS対策）
+    document.documentElement.scrollLeft = 0;
+    document.body.scrollLeft = 0;
+    const bc = pages[i].querySelector('.body2col');
+    if (bc) bc.scrollTop = 0;
+    const tx = pages[i].querySelector('.txt');
+    if (tx) tx.scrollTop = 0;
+  }
+
+  function clearHl(scope) {
+    (scope || document).querySelectorAll('span[data-sid].active')
+      .forEach(s => s.classList.remove('active'));
+  }
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  async function playPage(i, fromSentence = 0) {
+    const mySeq = ++seq;
+    const pageEl = pages[i];
+    const pid = pageEl.dataset.page;
+    const list = byPage[pid] || [];
+    playing = true; playBtn.textContent = '❚❚';
+
+    for (let s = fromSentence; s < list.length; s++) {
+      if (mySeq !== seq) return;
+      const item = list[s];
+      const span = pageEl.querySelector('span[data-sid="' + item.id + '"]');
+      clearHl(pageEl);
+      if (span) {
+        span.classList.add('active');
+        // 画面全体は動かさず、文字フレーム（.txt）の中だけで
+        // 「はみ出したときだけ最小限」追従させる（画像は固定のまま）
+        const scroller = [span.closest('.txt'), span.closest('.body2col')]
+          .find(el => el && el.scrollHeight > el.clientHeight + 4);
+        if (scroller) {
+          const cR = scroller.getBoundingClientRect();
+          const sR = span.getBoundingClientRect();
+          if (sR.bottom > cR.bottom - 6) {
+            scroller.scrollTo({ top: scroller.scrollTop + (sR.bottom - cR.bottom) + 28, behavior: 'smooth' });
+          } else if (sR.top < cR.top + 6) {
+            scroller.scrollTo({ top: Math.max(0, scroller.scrollTop - (cR.top - sR.top) - 28), behavior: 'smooth' });
+          }
+        }
+      }
+      try {
+        await new Promise((res, rej) => {
+          audio.src = 'assets/audio/' + item.file;
+          audio.defaultPlaybackRate = speed;
+          audio.playbackRate = speed;
+          audio.onended = res;
+          audio.onerror = res;           // 音声欠落時は読み飛ばす
+          audio.play().then(() => { audio.playbackRate = speed; }).catch(res);
+          const guard = setInterval(() => { if (mySeq !== seq) { clearInterval(guard); res(); } }, 200);
+          audio.onended = () => { clearInterval(guard); res(); };
+        });
+      } catch (e) { /* skip */ }
+      if (mySeq !== seq) return;
+      await sleep(260);
+      if (mySeq !== seq) return;
+    }
+
+    clearHl(pageEl);
+    if (mySeq !== seq) return;
+    if (autoTurn && i < pages.length - 1) {
+      await sleep(650);
+      if (mySeq !== seq) return;
+      showPage(i + 1);
+      playPage(i + 1);
+    } else {
+      playing = false; playBtn.textContent = '▶';
+    }
+  }
+
+  function stopAudio() {
+    seq++;
+    audio.pause();
+    playing = false; playBtn.textContent = '▶';
+    clearHl();
+  }
+
+  function goto(i) {
+    if (i < 0 || i >= pages.length) return;
+    const wasPlaying = playing;
+    stopAudio();
+    showPage(i);
+    if (wasPlaying) playPage(i);
+  }
+
+  playBtn.addEventListener('click', () => {
+    if (playing) { stopAudio(); }
+    else { playPage(cur); }
+  });
+  prevBtn.addEventListener('click', () => { prevBtn.blur(); goto(cur - 1); });
+  nextBtn.addEventListener('click', () => { nextBtn.blur(); goto(cur + 1); });
+  autoTgl.addEventListener('click', () => {
+    autoTgl.blur();
+    autoTurn = !autoTurn;
+    autoTgl.classList.toggle('on', autoTurn);
+  });
+  speedSel.addEventListener('change', () => {
+    speed = parseFloat(speedSel.value);
+    audio.defaultPlaybackRate = speed;
+    audio.playbackRate = speed;   // 再生中の文にも即反映
+    speedSel.blur();              // ここにフォーカスが残ると矢印キーが速度切替に食われる
+  });
+  // キーボード操作：← → でページ送り、スペースで再生/停止
+  document.addEventListener('keydown', e => {
+    const tag = e.target && e.target.tagName;
+    if (tag === 'SELECT' || tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); goto(cur + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); goto(cur - 1); }
+    else if (e.key === ' ') { e.preventDefault(); playBtn.blur(); playBtn.click(); }
+    else if (e.key === 'Escape') lightbox.classList.remove('show');
+  });
+
+  // クリックで拡大
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = lightbox.querySelector('img');
+  document.querySelectorAll('.shotcard img, .figimg').forEach(img => {
+    img.addEventListener('click', e => {
+      e.stopPropagation();
+      lightboxImg.src = img.src;
+      lightbox.classList.add('show');
+    });
+  });
+  lightbox.addEventListener('click', () => lightbox.classList.remove('show'));
+  document.querySelectorAll('.figcap').forEach(c => { c.textContent += '（クリックで拡大）'; });
+
+  const startBtn = document.getElementById('startBtn');
+  startBtn.addEventListener('click', () => {
+    ctrl.style.visibility = 'visible';
+    playPage(0);
+  });
+
+  showPage(0, true);
+})();
+</script>
+</body>
+</html>
